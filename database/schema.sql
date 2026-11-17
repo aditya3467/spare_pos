@@ -1,0 +1,30 @@
+CREATE TABLE IF NOT EXISTS shops (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(150) NOT NULL,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS users (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ shop_id BIGINT UNSIGNED NULL,
+ name VARCHAR(120) NOT NULL,
+ email VARCHAR(190) NOT NULL UNIQUE,
+ password_hash VARCHAR(255) NOT NULL,
+ role ENUM('superadmin','shop_owner','staff') NOT NULL,
+ active BOOLEAN NOT NULL DEFAULT TRUE,
+ last_login_at DATETIME NULL,
+ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (shop_id) REFERENCES shops(id),
+ CHECK ((role = 'superadmin' AND shop_id IS NULL) OR (role <> 'superadmin' AND shop_id IS NOT NULL))
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS staff_permissions (
+ user_id BIGINT UNSIGNED NOT NULL,
+ permission VARCHAR(80) NOT NULL,
+ PRIMARY KEY (user_id, permission),
+ FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS login_attempts (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ identity_hash CHAR(64) NOT NULL,
+ attempted_at DATETIME NOT NULL,
+ INDEX attempt_lookup (identity_hash, attempted_at)
+) ENGINE=InnoDB;
