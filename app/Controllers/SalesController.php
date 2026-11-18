@@ -15,13 +15,23 @@ final class SalesController extends Controller {
  public function complete():void {$this->json(function(){$d=$this->input();$id=$this->service()->complete($d,current_user(),is_string($d['request_key']??null)?$d['request_key']:'');return ['id'=>$id,'url'=>url('/sales/invoice').'&id='.$id];});}
  public function history():void {$filters=[];foreach($_GET as $k=>$v)if(is_string($v))$filters[$k]=$v;$error='';try{$listing=$this->service()->history($filters);}catch(DomainException $e){$error=$e->getMessage();$listing=$this->service()->history([]);}$this->page('sales/history',compact('listing','filters','error'),'Sales History','Sales');}
  public function invoice():void {
-  try{$id=ProductService::optionalId($_GET['id']??'');if(!$id)throw new DomainException('Choose an invoice.');$sale=$this->service()->get($id);if(!can(current_user(),'sales.view') && (int)$sale['created_by']!==(int)current_user()['id']){http_response_code(403);echo 'Sales history permission required.';return;}}
+  $printing=\App\Core\Request::route()==='/sales/print';
+  try{$id=ProductService::optionalId($_GET['id']??'');if(!$id)throw new DomainException('Choose an invoice.');$sale=$this->service()->get($id);if(!$printing && !can(current_user(),'sales.view') && (int)$sale['created_by']!==(int)current_user()['id']){http_response_code(403);echo 'Sales history permission required.';return;}}
   catch(DomainException $e){http_response_code(404);echo e($e->getMessage());return;}
-  $printing=\App\Core\Request::route()==='/sales/print';$format=($_GET['format']??'')==='thermal'?'thermal':'a4';$notice=$_SESSION['sales_notice']??'';unset($_SESSION['sales_notice']);$error=$_SESSION['sales_error']??'';unset($_SESSION['sales_error']);
+  $format=($_GET['format']??'')==='thermal'?'thermal':'a4';$notice=$_SESSION['sales_notice']??'';unset($_SESSION['sales_notice']);$error=$_SESSION['sales_error']??'';unset($_SESSION['sales_error']);
   if($printing){$this->view('sales/print',compact('sale','format'));return;}$this->page('sales/invoice',compact('sale','notice','error'),'Invoice '.$sale['invoice_number'],'Sales');
  }
  public function cancel():void {
   $id=ProductService::optionalId($_POST['id']??'');try{if(!$id)throw new DomainException('Choose an invoice.');$this->service()->cancel($id,$_POST,current_user());$_SESSION['sales_notice']='Invoice cancelled. Linked stock and payment reversals recorded.';}catch(DomainException $e){$_SESSION['sales_error']=$e->getMessage();}catch(\Throwable $e){error_log((string)$e);$_SESSION['sales_error']='Cancellation failed and was rolled back. Retry after reviewing the invoice.';}header('Location: '.url('/sales/invoice').'&id='.(int)$id);exit;
+ }
+ public function report():void {
+  $filters=[];foreach($_GET as $k=>$v)if(is_string($v))$filters[$k]=$v;$error=$_SESSION['revenue_error']??'';unset($_SESSION['revenue_error']);$notice=$_SESSION['revenue_notice']??'';unset($_SESSION['revenue_notice']);
+  try{$dates=\App\Services\RevenueReportService::dates($filters);}catch(DomainException $e){$error=$e->getMessage();$dates=\App\Services\RevenueReportService::dates([]);}
+  $service=new \App\Services\RevenueReportService((int)current_user()['shop_id']);$summary=$service->summary($dates);$expenses=$service->expenses($dates);$key=bin2hex(random_bytes(20));$this->page('sales/report',compact('dates','summary','expenses','key','notice','error'),'Revenue & Profit','Reports');
+ }
+ public function expense():void {
+  try{(new \App\Services\RevenueReportService((int)current_user()['shop_id']))->recordExpense($_POST,current_user(),is_string($_POST['request_key']??null)?$_POST['request_key']:'');$_SESSION['revenue_notice']='Labour expense recorded.';}catch(DomainException $e){$_SESSION['revenue_error']=$e->getMessage();}catch(\Throwable $e){error_log((string)$e);$_SESSION['revenue_error']='The expense could not be recorded. Retry using the same form.';}
+  header('Location: '.url('/sales/report'));exit;
  }
  public function settings():void {
   $service=new SalesSettingsService((int)current_user()['shop_id']);$error='';$notice='';$settings=$service->get(false);

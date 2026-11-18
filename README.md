@@ -116,3 +116,7 @@ Product listing, details, create/edit, duplicate, archival, owner brand/bike mas
 ## Inventory Management
 
 Manual Inventory is available at `/inventory`, with Stock In, Stock Out, counted-stock adjustments, immutable movement history and linked reversal corrections. Apply `php database/migrations/inventory-management.php` after product setup. Owners can configure the new view/in/out/history staff permissions alongside the existing adjustment permission. [Inventory documentation](docs/inventory.md) explains the additive ledger fields, row locks, retry receipts, average costs, low/zero-stock rules, tests and legacy-data limitations. No purchase invoices, sales/POS, barcode or unit-management module was added.
+
+POS and Sales: configure the shop's tax and invoice settings before billing. Setup, workflows, database migration, permissions and test commands are documented in [docs/sales.md](docs/sales.md).
+
+POS labour charges are service lines with no inventory effect. Apply `php database/migrations/sales-labour.php` after the sales migration. Configure a separate labour tax classification for regular GST billing. Revenue and profit reporting, actual technician payouts and cancellation reversals are documented in [docs/sales.md](docs/sales.md#labour-services-revenue-and-actual-costs).

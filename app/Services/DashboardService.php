@@ -25,7 +25,7 @@ final class DashboardService {
             'stock'=>$shop && ($owner || can($user,'inventory.view') || can($user,'inventory.adjust') || can($user,'products.manage') || can($user,'reports.view')),
             'finance'=>$shop && ($owner || can($user,'reports.view')),
         ];
-        $data=['access'=>$access,'products'=>null,'low_stock_count'=>null,'valuation'=>null,'balance_count'=>0,'untracked_count'=>0,'category_count'=>null,'subcategory_count'=>null,'low_stock'=>[],'movements'=>[],'activity'=>[],'available'=>[],'errors'=>[]];
+        $data=['access'=>$access,'products'=>null,'low_stock_count'=>null,'valuation'=>null,'balance_count'=>0,'untracked_count'=>0,'category_count'=>null,'subcategory_count'=>null,'low_stock'=>[],'movements'=>[],'activity'=>[],'sales_today'=>null,'revenue'=>null,'recent_sales'=>[],'available'=>[],'errors'=>[]];
         if (!$shop) return $data;
         $today=new DateTimeImmutable('today',new DateTimeZone('Asia/Kolkata'));
         $from=$today->modify('-'.($days-1).' days')->format('Y-m-d H:i:s');$until=$today->modify('+1 day')->format('Y-m-d H:i:s');
@@ -60,6 +60,14 @@ final class DashboardService {
             if (!$owner) { $sql.=' AND id=?';$args[]=$user['id']; }
             $data['activity']=$this->query($sql.' ORDER BY last_login_at DESC,id DESC LIMIT 5',$args)->fetchAll();
         } catch (Throwable $e) { error_log($e->getMessage());$data['errors']['activity']='Recent activity could not be loaded.'; }
+        try {
+            if ($access['finance'] && $this->hasTable('sales') && $this->hasTable('sale_items') && $this->hasTable('sale_services') && $this->hasTable('service_expenses') && $this->hasTable('sale_cancellations')) {
+                $revenue=new RevenueReportService((int)$shop);
+                $data['sales_today']=$revenue->summary(['from'=>$today->format('Y-m-d'),'to'=>$today->format('Y-m-d')]);
+                $data['revenue']=$revenue->summary(['from'=>substr($from,0,10),'to'=>$today->format('Y-m-d')]);
+                if (can($user,'sales.view')) $data['recent_sales']=array_slice((new SaleService((int)$shop))->history([])['rows'],0,5);
+            }
+        } catch (Throwable $e) { error_log($e->getMessage());$data['sales_today']=null;$data['revenue']=null;$data['errors']['sales']='Sales totals are temporarily unavailable.'; }
         return $data;
     }
 }

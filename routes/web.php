@@ -25,7 +25,7 @@ foreach([['GET','/inventory','index'],['GET','/inventory/stock','index'],['GET',
  $router->add($method,$path,[App\Controllers\InventoryController::class,$action],$middleware);
 }
 
-foreach([['GET','/pos','pos'],['GET','/pos/search','search'],['GET','/pos/customers','customers'],['POST','/pos/customer','customer'],['POST','/pos/quote','quote'],['POST','/pos/complete','complete'],['GET','/sales','history'],['GET','/sales/invoice','invoice'],['GET','/sales/print','invoice'],['POST','/sales/cancel','cancel'],['GET','/sales/settings','settings'],['POST','/sales/settings','settings']] as [$method,$path,$action]){
+foreach([['GET','/sales/report','report'],['POST','/sales/labour-expense','expense'],['GET','/pos','pos'],['GET','/pos/search','search'],['GET','/pos/customers','customers'],['POST','/pos/customer','customer'],['POST','/pos/quote','quote'],['POST','/pos/complete','complete'],['GET','/sales','history'],['GET','/sales/invoice','invoice'],['GET','/sales/print','invoice'],['POST','/sales/cancel','cancel'],['GET','/sales/settings','settings'],['POST','/sales/settings','settings']] as [$method,$path,$action]){
  $middleware=[AuthMiddleware::class,App\Middleware\SalesMiddleware::class];if($method==='POST')$middleware[]=CsrfMiddleware::class;
  $router->add($method,$path,[App\Controllers\SalesController::class,$action],$middleware);
 }

@@ -86,14 +86,14 @@ final class StockService {
   $pdo=db();if(!$pdo->inTransaction())throw new \LogicException('Sale stock posting requires a transaction.');
   $q=$pdo->prepare('SELECT id,status,archived_at FROM products WHERE shop_id=? AND id=? FOR UPDATE');$q->execute([$this->shop,$product]);$p=$q->fetch();if(!$p || (!$originalId && ($p['status']!=='active' || $p['archived_at'])))throw new DomainException('Only active products can be sold.');
   $q=$pdo->prepare('SELECT * FROM stock_balances WHERE shop_id=? AND product_id=? FOR UPDATE');$q->execute([$this->shop,$product]);$b=$q->fetch();if(!$b)throw new DomainException('Product has no stock balance.');
-  $q=$pdo->prepare('SELECT COALESCE(SUM(quantity_delta),0) FROM stock_movements WHERE shop_id=? AND product_id=?');$q->execute([$this->shop,$product]);if(bccomp($b['quantity'],(string)$q->fetchColumn(),6)!==0)throw new DomainException('Stock ledger mismatch. Owner reconciliation required.');
+  $q=$pdo->prepare('SELECT COALESCE(SUM(quantity_delta),0) FROM stock_movements WHERE shop_id=? AND product_id=? FOR UPDATE');$q->execute([$this->shop,$product]);if(bccomp($b['quantity'],(string)$q->fetchColumn(),6)!==0)throw new DomainException('Stock ledger mismatch. Owner reconciliation required.');
   $cost=$b['average_unit_cost'];$delta=bcsub('0',$quantity,6);$type='sale';$kind='sale';
   if($originalId){
    $q=$pdo->prepare("SELECT * FROM stock_movements WHERE shop_id=? AND product_id=? AND id=? AND movement_type='sale' AND reference_type='sale' AND reference_id=? FOR UPDATE");$q->execute([$this->shop,$product,$originalId,(string)$saleId]);$o=$q->fetch();if(!$o || bccomp(bcsub('0',$o['quantity_delta'],6),$quantity,6)!==0)throw new DomainException('Sale movement does not match cancellation.');
    $q=$pdo->prepare('SELECT id FROM stock_movements WHERE shop_id=? AND reverses_movement_id=?');$q->execute([$this->shop,$originalId]);if($q->fetchColumn())throw new DomainException('Sale stock was already reversed.');
    $cost=$o['unit_cost'];$delta=$quantity;$type='reversal';$kind='reverse';
   }
-  [$movement,$after]=$this->applyLocked($pdo,$product,$b['quantity'],$b['average_unit_cost'],$delta,$cost,$kind,$type,$originalId,'',$actorId,$originalId?'Invoice cancellation':'Counter sale',date('Y-m-d'),($originalId?'sale-cancel:':'sale:').$saleId.':'.$product,'sale',(string)$saleId,0);
+  [$movement,$after]=$this->applyLocked($pdo,$product,$b['quantity'],$b['average_unit_cost'],$delta,$cost,$kind,$type,$originalId,'',$actorId,$originalId?'Invoice cancellation':'Counter sale',(new \DateTimeImmutable('today',new \DateTimeZone('Asia/Kolkata')))->format('Y-m-d'),($originalId?'sale-cancel:':'sale:').$saleId.':'.$product,'sale',(string)$saleId,0);
   return ['movement_id'=>$movement,'unit_cost'=>$cost,'resulting'=>$after];
  }
 
