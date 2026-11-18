@@ -9,7 +9,7 @@ function rejected(callable $f,string $message):void{try{$f();}catch(DomainExcept
 try{
  putenv('DB_DSN=mysql:host=127.0.0.1;dbname='.$database.';charset=utf8mb4');putenv('DB_USERNAME='.(getenv('TEST_DB_ADMIN')?:'root'));putenv('DB_PASSWORD='.(getenv('TEST_DB_PASSWORD')?:''));require $root.'/app/bootstrap.php';
  db()->exec(file_get_contents($root.'/database/schema.sql'));
- foreach(['inventory.php','products.php','products.php'] as $script){$proc=proc_open([PHP_BINARY,$root.'/database/migrations/'.$script],[1=>['pipe','w'],2=>['pipe','w']],$pipes,$root);$output=stream_get_contents($pipes[1]);$error=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);if(proc_close($proc)!==0)throw new RuntimeException($error.$output);}
+ foreach(['inventory.php','products.php','inventory-management.php','products.php'] as $script){$proc=proc_open([PHP_BINARY,$root.'/database/migrations/'.$script],[1=>['pipe','w'],2=>['pipe','w']],$pipes,$root);$output=stream_get_contents($pipes[1]);$error=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);if(proc_close($proc)!==0)throw new RuntimeException($error.$output);}
  db()->exec("INSERT INTO shops(name) VALUES ('Test shop'),('Other shop')");$shop=1;
  foreach(['shop_owner','staff'] as $role)db()->prepare('INSERT INTO users(shop_id,name,email,password_hash,role) VALUES(1,?,?,?,?)')->execute([$role,$role.'@test.invalid',password_hash('Test-password-123',PASSWORD_DEFAULT),$role]);
  $owner=['id'=>1,'shop_id'=>1,'role'=>'shop_owner'];$staff=['id'=>2,'shop_id'=>1,'role'=>'staff'];

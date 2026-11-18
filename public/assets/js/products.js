@@ -1,11 +1,22 @@
 (() => {
  const raw=document.getElementById('product-master-data');const masters=raw?JSON.parse(raw.textContent):null;
  function parentFilter(){const category=document.querySelector('[data-product-category]'),sub=document.querySelector('[data-product-subcategory]');if(!category||!sub)return;for(const option of sub.options){if(!option.value)continue;option.hidden=!!category.value&&option.dataset.parent!==category.value;option.disabled=option.hidden;}if(sub.selectedOptions[0]?.disabled)sub.value='';}
+ function selectSubcategoryParent(sub){
+  const form=sub.closest('#product-form');if(!form)return;
+  const category=form.querySelector('[data-product-category]');
+  const parent=sub.selectedOptions[0]?.dataset.parent;
+  if(!category || !sub.value || !parent)return;
+  const option=[...category.options].find(option=>option.value===parent && !option.disabled);
+  if(!option)return;
+  category.value=parent;parentFilter();
+ }
  function bikes(row,reset=false){if(!masters)return;const maker=row.querySelector('[data-bike-maker]'),model=row.querySelector('[data-bike-model]'),variant=row.querySelector('[data-bike-variant]');for(const option of model.options){if(!option.value)continue;const record=masters.vehicle_models.find(r=>String(r.id)===option.value);option.disabled=String(record.manufacturer_id)!==maker.value;option.hidden=option.disabled;}if(reset||model.selectedOptions[0]?.disabled)model.value='';for(const option of variant.options){if(!option.value)continue;const record=masters.vehicle_variants.find(r=>String(r.id)===option.value);option.disabled=String(record.model_id)!==model.value;option.hidden=option.disabled;}if(reset||variant.selectedOptions[0]?.disabled)variant.value='';}
  const openingCost = () => {const form=document.getElementById('product-form');if(form?.elements.opening_quantity && form.elements.opening_cost){form.elements.opening_cost.required=Number(form.elements.opening_quantity.value)>0;}};
  document.addEventListener('input',event=>{if(event.target.name==='opening_quantity')openingCost();});openingCost();
+ const initialSub=document.querySelector('#product-form [data-product-subcategory]');
+ if(initialSub && !document.querySelector('#product-form [data-product-category]').value)selectSubcategoryParent(initialSub);
  let index=1000;parentFilter();document.querySelectorAll('[data-fitment-row]').forEach(r=>bikes(r));
- document.addEventListener('change',event=>{if(event.target.matches('[data-product-category]'))parentFilter();if(event.target.matches('[data-bike-maker]'))bikes(event.target.closest('[data-fitment-row]'),true);if(event.target.matches('[data-bike-model]'))bikes(event.target.closest('[data-fitment-row]'));});
+ document.addEventListener('change',event=>{if(event.target.matches('#product-form [data-product-subcategory]'))selectSubcategoryParent(event.target);if(event.target.matches('[data-product-category]'))parentFilter();if(event.target.matches('[data-bike-maker]'))bikes(event.target.closest('[data-fitment-row]'),true);if(event.target.matches('[data-bike-model]'))bikes(event.target.closest('[data-fitment-row]'));});
  document.addEventListener('click',event=>{const spec=event.target.closest('[data-add-specification]'),fit=event.target.closest('[data-add-fitment]');if(spec||fit){const template=document.getElementById(spec?'specification-template':'fitment-template');const container=document.getElementById(spec?'specification-rows':'fitment-rows');container.insertAdjacentHTML('beforeend',template.innerHTML.replaceAll('__INDEX__',String(index++)));if(fit)bikes(container.lastElementChild);container.lastElementChild.querySelector('input,select')?.focus();}const remove=event.target.closest('[data-remove-row]');if(remove)remove.closest('.specification-row,.fitment-row').remove();});
  document.addEventListener('submit',event=>{const form=event.target;if(form.dataset.productConfirm&&!confirm(form.dataset.productConfirm)){event.preventDefault();return;}if(form.id==='product-form'){const button=form.querySelector('[type="submit"]');button.disabled=true;form.querySelector('[role="status"]').textContent='Saving product…';}});
  // Progressive enhancement of the existing listing; forms elsewhere are untouched.

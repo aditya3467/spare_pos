@@ -22,7 +22,7 @@ final class DashboardService {
         $owner=$user['role']==='shop_owner';$shop=$user['shop_id'];
         $access=[
             'catalogue'=>$shop && ($owner || can($user,'products.manage') || can($user,'reports.view')),
-            'stock'=>$shop && ($owner || can($user,'inventory.adjust') || can($user,'products.manage') || can($user,'reports.view')),
+            'stock'=>$shop && ($owner || can($user,'inventory.view') || can($user,'inventory.adjust') || can($user,'products.manage') || can($user,'reports.view')),
             'finance'=>$shop && ($owner || can($user,'reports.view')),
         ];
         $data=['access'=>$access,'products'=>null,'low_stock_count'=>null,'valuation'=>null,'balance_count'=>0,'untracked_count'=>0,'category_count'=>null,'subcategory_count'=>null,'low_stock'=>[],'movements'=>[],'activity'=>[],'available'=>[],'errors'=>[]];
@@ -41,7 +41,7 @@ final class DashboardService {
         try {
             if (($access['stock'] || $access['finance']) && ($data['available']['stock']=$this->hasTable('products') && $this->hasTable('stock_balances'))) {
                 if ($access['stock']) {
-                    $where="FROM products p JOIN stock_balances b ON b.shop_id=p.shop_id AND b.product_id=p.id WHERE p.shop_id=? AND p.status='active' AND p.archived_at IS NULL AND p.reorder_level>0 AND b.quantity<=p.reorder_level";
+                    $where="FROM products p JOIN stock_balances b ON b.shop_id=p.shop_id AND b.product_id=p.id WHERE p.shop_id=? AND p.status='active' AND p.archived_at IS NULL AND b.quantity>0 AND p.reorder_level>0 AND b.quantity<=p.reorder_level";
                     $data['low_stock_count']=(int)$this->query('SELECT COUNT(*) '.$where,[$shop])->fetchColumn();
                     $data['low_stock']=$this->query('SELECT p.name,p.sku,b.quantity,p.reorder_level '.$where.' ORDER BY b.quantity/p.reorder_level,p.name LIMIT 6',[$shop])->fetchAll();
                 }
@@ -51,7 +51,7 @@ final class DashboardService {
             }
         } catch (Throwable $e) { error_log($e->getMessage());$data['low_stock_count']=null;$data['valuation']=null;$data['errors']['stock']='Stock information is temporarily unavailable.'; }
         try {
-            if ($access['stock'] && ($data['available']['movements']=$this->hasTable('stock_movements') && $this->hasTable('products') && $this->hasTable('units'))) {
+            if ($access['stock'] && ($owner || can($user,'inventory.movements') || can($user,'products.manage') || can($user,'reports.view')) && ($data['available']['movements']=$this->hasTable('stock_movements') && $this->hasTable('products') && $this->hasTable('units'))) {
                 $data['movements']=$this->query('SELECT p.name,p.sku,m.movement_type,m.quantity_delta,m.created_at,m.reference_type,m.reference_id,u.code AS unit FROM stock_movements m JOIN products p ON p.shop_id=m.shop_id AND p.id=m.product_id JOIN units u ON u.shop_id=p.shop_id AND u.id=p.base_unit_id WHERE m.shop_id=? AND m.created_at>=? AND m.created_at<? ORDER BY m.created_at DESC,m.id DESC LIMIT 6',[$shop,$from,$until])->fetchAll();
             }
         } catch (Throwable $e) { error_log($e->getMessage());$data['errors']['movements']='Recent stock movements could not be loaded.'; }

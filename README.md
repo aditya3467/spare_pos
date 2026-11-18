@@ -112,3 +112,7 @@ Main-category actions now use header dropdowns and a shared confirmation dialog.
 ## Product Management
 
 Product listing, details, create/edit, duplicate, archival, owner brand/bike masters and product tax configuration are implemented. Apply `php database/migrations/products.php` after inventory setup. Imports and explicit fitment verification have separate staff permissions. [Product documentation](docs/products.md) covers migrations, stock atomicity, CSV/XLSX templates, separate compatibility import, permissions, catalogue sources and tests. Products navigation and Add Product now work; future POS and purchase screens stay disabled. No barcode or unit-management features were introduced.
+
+## Inventory Management
+
+Manual Inventory is available at `/inventory`, with Stock In, Stock Out, counted-stock adjustments, immutable movement history and linked reversal corrections. Apply `php database/migrations/inventory-management.php` after product setup. Owners can configure the new view/in/out/history staff permissions alongside the existing adjustment permission. [Inventory documentation](docs/inventory.md) explains the additive ledger fields, row locks, retry receipts, average costs, low/zero-stock rules, tests and legacy-data limitations. No purchase invoices, sales/POS, barcode or unit-management module was added.

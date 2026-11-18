@@ -4,7 +4,7 @@ Run `php database/migrations/products.php` after inventory setup. It adds produc
 
 Permissions: `products.manage` for catalogue operations, `products.import` additionally for imports, `products.verify_fitment` for explicit verification. Owners manage brand, bike and tax masters. Staff grants are configured on the existing Staff & Permissions page. All product and master references are checked within the current shop.
 
-Each distinct part gets a unique SKU. Compatible bikes share that product's inventory. Product, opening movement, balance, aliases, specifications and fitments are committed atomically. Failure anywhere rolls back all records. Creation/import keys prevent duplicate stock on retries. Editing uses version checks, preserves stock and rejects opening-stock fields. Stock movements remain append-only. Subsequent changes belong in inventory operations, not this editor. Archive retains the product, stock and history.
+Each distinct part gets a unique SKU. Compatible bikes share that product's inventory. Product, opening movement, balance, aliases, specifications and fitments are committed atomically. Failure anywhere rolls back all records. Creation/import keys prevent duplicate stock on retries. Editing uses version checks, preserves stock and rejects opening-stock fields. Stock movements remain append-only. Subsequent changes use the Inventory module, not this editor. Archive retains the product, stock and history.
 
 Duplicate opens an unsaved prefilled form with a fresh creation key. It copies product information but excludes SKU, stock, balances and movement history. Opening quantity defaults to zero and fitment verification is reset. A new product is created only on submission.
 
@@ -25,7 +25,7 @@ Requires PHP PDO MySQL, mbstring, BCMath, ZipArchive and SimpleXML. `storage/imp
 - `RUN_PRODUCT_TESTS=1 php tests/ProductTest.php`: disposable MySQL database, real migrations, atomic stock/forced rollback, retries, duplication, multi-bike inventory, permissions, CSV/XLSX and compatibility imports. Uses local MySQL admin; optional `TEST_DB_ADMIN` / `TEST_DB_PASSWORD`.
 - `python3 tests/ProductHttpTest.py`: temporary shop, real HTTP creation/edit/duplicate and multipart CSV upload/preview/commit/report/replay. Zero-stock fixtures and guarded cleanup.
 - Chrome: dynamic specifications/bike rows, dependent selectors, duplicate/reset stock, unique SKUs, editing, search, desktop/tablet/mobile overflow.
-- Existing category, workspace and authentication regressions also run. No sales, purchase invoices, POS or stock-adjustment module is implemented here.
+- Existing category, workspace and authentication regressions also run. No sales, purchase invoices or POS module is implemented here; manual stock adjustments are documented in [inventory.md](inventory.md).
 
 ## Bike seed sources
 

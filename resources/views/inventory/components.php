@@ -1,0 +1,6 @@
+<?php
+function inventoryActions(?int $product=null,bool $allowIn=true):void {foreach(['in'=>'Stock In','out'=>'Stock Out','adjust'=>'Adjustment'] as $kind=>$label){if(($kind==='in' && !$allowIn) || !can(current_user(),App\Services\StockService::permission($kind)))continue;?><a class="button <?= $kind==='in'?'button-primary':'' ?>" href="<?= e(url('/inventory/form')) ?>&amp;kind=<?= $kind ?><?= $product?'&amp;product_id='.$product:'' ?>"><?= e($label) ?></a><?php }}
+function stockStatus(array $p):string {
+ if($p['quantity']===null)return 'Not tracked';if(bccomp((string)$p['quantity'],'0',6)===0)return 'Out of stock';if(bccomp((string)$p['reorder_level'],'0',6)>0 && bccomp((string)$p['quantity'],(string)$p['reorder_level'],6)<=0)return 'Low stock';return 'In stock';
+}
+function inventoryPager(array $listing,array $filters,string $route):void { ?><nav class="pagination" aria-label="Pages"><span>Page <?= $listing['page'] ?> of <?= $listing['pages'] ?></span><?php foreach(['Previous'=>$listing['page']-1,'Next'=>$listing['page']+1] as $label=>$page): if($page<1 || $page>$listing['pages'])continue; ?><a class="button" href="index.php?<?= e(http_build_query(array_replace($filters,['route'=>$route,'page'=>$page]))) ?>"><?= e($label) ?></a><?php endforeach; ?></nav><?php }

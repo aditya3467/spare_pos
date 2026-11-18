@@ -1,0 +1,4 @@
+<?php
+if(PHP_SAPI!=='cli'){http_response_code(404);exit;}
+require dirname(__DIR__,2).'/app/bootstrap.php';
+try{foreach(['products'=>['inventory_product_name'=>['shop_id','name'],'inventory_oem'=>['shop_id','part_number']],'product_fitments'=>['inventory_fitment_products'=>['shop_id','fitment_id','product_id']]] as $table=>$indexes)foreach($indexes as $name=>$columns){$q=db()->prepare('SELECT GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=? GROUP BY INDEX_NAME');$q->execute([$table]);$found=false;foreach($q->fetchAll(PDO::FETCH_COLUMN) as $existing)if($existing===implode(',',$columns))$found=true;if(!$found)db()->exec("ALTER TABLE $table ADD INDEX $name (".implode(',',$columns).')');}echo "Inventory search indexes ready; existing keys reused.\n";}catch(Throwable $e){fwrite(STDERR,$e->getMessage()."\n");exit(1);}
