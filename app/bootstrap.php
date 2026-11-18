@@ -22,6 +22,7 @@ if (is_file($environment)) {
 require BASE_PATH . '/app/Helpers/response.php';
 require BASE_PATH . '/app/Helpers/validation.php';
 require BASE_PATH . '/app/Helpers/permissions.php';
+require BASE_PATH . '/app/Helpers/ui.php';
 if (PHP_SAPI !== 'cli') {
     ini_set('display_errors', '0');
     ini_set('log_errors', '1');

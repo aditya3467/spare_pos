@@ -1,25 +1,18 @@
 <?php
 namespace App\Controllers;
 use App\Core\Controller;
-use App\Models\User;
-use App\Services\StaffPermissionService;
-use DomainException;
+use App\Services\DashboardService;
+use DateTimeImmutable;
+use DateTimeZone;
 final class DashboardController extends Controller {
     public function index(): void {
-        $user = current_user();
-        $staff = $user['role'] === 'shop_owner' ? User::staff((int)$user['shop_id']) : [];
-        $notice = $_SESSION['notice'] ?? ''; unset($_SESSION['notice']);
-        $message = '';
-        $role = ['superadmin' => 'Superadmin', 'shop_owner' => 'Shop owner', 'staff' => 'Staff'][$user['role']];
-        $this->view('dashboard/index', compact('user', 'staff', 'notice', 'message', 'role'));
+        $user=current_user();
+        $days=filter_var($_GET['days'] ?? 7,FILTER_VALIDATE_INT);
+        if (!in_array($days,[7,30,90],true)) $days=7;
+        $dashboard=(new DashboardService())->overview($user,$days);
+        $date=new DateTimeImmutable('now',new DateTimeZone('Asia/Kolkata'));
+        $this->page('dashboard/index',compact('user','dashboard','date','days'),'Dashboard','Overview');
     }
-    public function permissions(): void {
-        $id = filter_var($_POST['staff_id'] ?? '', FILTER_VALIDATE_INT);
-        $selected = $_POST['permissions'] ?? [];
-        if (!$id || !valid_permissions($selected)) { http_response_code(422); echo 'Invalid staff or permissions.'; return; }
-        try { (new StaffPermissionService())->update(current_user(), $id, $selected); }
-        catch (DomainException $exception) { http_response_code(403); echo 'Access denied.'; return; }
-        $_SESSION['notice'] = 'Staff permissions updated.';
-        redirect('/dashboard');
-    }
+    // Retained for code calling the original controller action.
+    public function permissions(): void { (new StaffController())->permissions(); }
 }
