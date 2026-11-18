@@ -5,7 +5,7 @@ use App\Services\{InventoryService,StockService,ProductService};
 use DomainException;
 final class InventoryController extends Controller {
  private function service():InventoryService{return new InventoryService((int)current_user()['shop_id']);}
- private function filters():array {$f=[];foreach($_GET as $k=>$v)if(is_string($v))$f[$k]=$v;return $f;}
+ private function filters():array {$f=[];foreach($_GET as $k=>$v)if(is_string($v))$f[$k]=$v;if(isset($f['sort_order']) && preg_match('/^(name|sku|stock):(asc|desc)$/D',$f['sort_order'],$order)){$f['sort']=$order[1];$f['direction']=$order[2];}unset($f['sort_order']);return $f;}
  public function index():void {
   $user=current_user();$filters=$this->filters();$error='';
   try{$listing=(new \App\Services\InventorySearchService((int)$user['shop_id']))->listing($filters);}catch(DomainException $e){$error=$e->getMessage();$listing=(new \App\Services\InventorySearchService((int)$user['shop_id']))->listing([]);}

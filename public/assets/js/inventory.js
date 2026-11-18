@@ -19,21 +19,27 @@
    makerInput.setCustomValidity(makerInput.value && !filters.elements.manufacturer_id.value?'Choose a manufacturer from the catalogue suggestions.':'');
    modelInput.setCustomValidity(modelInput.value && !filters.elements.model_id.value?'Choose an unambiguous model from the suggestions, selecting manufacturer first if needed.':'');
   }
+  const combinedSort=filters.querySelector('[data-inventory-sort]');
+  function syncSort(fromSelection=false){
+   if(!combinedSort)return;
+   if(fromSelection){const [field,direction]=combinedSort.value.split(':');filters.elements.sort.value=field;filters.elements.direction.value=direction;}
+   else{const value=(filters.elements.sort.value||'name')+':'+(filters.elements.direction.value||'asc');combinedSort.value=[...combinedSort.options].some(option=>option.value===value)?value:'name:asc';syncSort(true);}
+  }
   function invalidate(){clearTimeout(timer);sequence++;controller?.abort();}
-  function url(page=1){const u=new URL('index.php',location.href);u.search=new URLSearchParams(new FormData(filters));u.searchParams.set('page',page);return u;}
+  function url(page=1){const u=new URL('index.php',location.href);u.search=new URLSearchParams(new FormData(filters));u.searchParams.delete('sort_order');u.searchParams.set('page',page);return u;}
   async function load(target,historyMode='replace'){
    invalidate();const current=sequence;controller=new AbortController();status.textContent='Searching inventory…';status.classList.add('is-loading');document.getElementById('inventory-results').setAttribute('aria-busy','true');
    try{const response=await fetch(target,{headers:{Accept:'application/json'},signal:controller.signal});if(!response.ok)throw new Error('Inventory search unavailable. Please try again.');if(!response.headers.get('content-type')?.includes('application/json'))throw new Error('Session expired. Reload to sign in.');const result=await response.json();if(current!==sequence)return;const template=document.createElement('template');template.innerHTML=result.html;if(!template.content.querySelector('#inventory-results'))throw new Error('Could not display results.');document.getElementById('inventory-results').replaceWith(template.content);target.searchParams.set('page',result.page);if(historyMode==='push')history.pushState(null,'',target);else if(historyMode==='replace')history.replaceState(null,'',target);status.textContent=result.total?`${result.total} products found.`:'No matching inventory.';
    }catch(e){if(current===sequence && e.name!=='AbortError')status.textContent=e.message||'Connection interrupted. Retry search.';}
    finally{if(current===sequence){status.classList.remove('is-loading');document.getElementById('inventory-results').removeAttribute('aria-busy');}}
   }
-  function changed(event){invalidate();catalogue(event.target);if(!filters.checkValidity()){status.textContent='Choose a bike from catalogue suggestions or clear the bike filter.';document.getElementById('inventory-results').removeAttribute('aria-busy');return;}const text=event.type==='input';if(text && event.target.value.trim()!=='')timer=setTimeout(()=>load(url()),300);else load(url());}
+  function changed(event){if(event.target===combinedSort)syncSort(true);invalidate();catalogue(event.target);if(!filters.checkValidity()){status.textContent='Choose a bike from catalogue suggestions or clear the bike filter.';document.getElementById('inventory-results').removeAttribute('aria-busy');return;}const text=event.type==='input';if(text && event.target.value.trim()!=='')timer=setTimeout(()=>load(url()),300);else load(url());}
   filters.addEventListener('input',changed);filters.addEventListener('change',event=>{if(event.target.tagName==='SELECT')changed(event);});
-  filters.addEventListener('submit',event=>{event.preventDefault();catalogue();if(filters.checkValidity())load(url());});
-  filters.querySelector('[data-clear-inventory-bike]').addEventListener('click',()=>{makerInput.value='';modelInput.value='';for(const name of ['manufacturer_id','model_id','variant_id','year'])filters.elements[name].value='';catalogue();load(url());});
+  filters.addEventListener('submit',event=>{event.preventDefault();syncSort(true);catalogue();if(filters.checkValidity())load(url());});
+  filters.querySelector('[data-clear-inventory-bike]').addEventListener('click',()=>{makerInput.value='';modelInput.value='';for(const name of ['manufacturer_id','model_id','variant_id'])filters.elements[name].value='';catalogue();load(url());});
   document.addEventListener('click',event=>{const link=event.target.closest('#inventory-results .pagination a');if(!link || event.ctrlKey || event.metaKey || event.shiftKey || event.button!==0)return;event.preventDefault();load(new URL(link.href),'push');});
-  window.addEventListener('popstate',()=>{const u=new URL(location.href);if(!['/inventory','/inventory/stock'].includes(u.searchParams.get('route')))return;for(const input of filters.querySelectorAll('[name]'))if(input.name!=='route')input.value=u.searchParams.get(input.name)??(input.tagName==='SELECT'?input.options[0].value:'');makerInput.value=bikes.vehicle_manufacturers.find(r=>String(r.id)===filters.elements.manufacturer_id.value)?.name||'';modelInput.value=bikes.vehicle_models.find(r=>String(r.id)===filters.elements.model_id.value)?.name||'';catalogue();load(u,'none');});
-  catalogue();
+  window.addEventListener('popstate',()=>{const u=new URL(location.href);if(!['/inventory','/inventory/stock'].includes(u.searchParams.get('route')))return;for(const input of filters.querySelectorAll('[name]'))if(input.name!=='route')input.value=u.searchParams.get(input.name)??(input.tagName==='SELECT'?input.options[0].value:'');makerInput.value=bikes.vehicle_manufacturers.find(r=>String(r.id)===filters.elements.manufacturer_id.value)?.name||'';modelInput.value=bikes.vehicle_models.find(r=>String(r.id)===filters.elements.model_id.value)?.name||'';syncSort();catalogue();load(u,'none');});
+  syncSort();catalogue();
  }
  const form=document.getElementById('inventory-operation');if(!form)return;
  const search=document.getElementById('inventory-product-search'),results=document.getElementById('inventory-search-results'),status=document.getElementById('inventory-search-status'),popup=document.getElementById('inventory-confirm-dialog');
