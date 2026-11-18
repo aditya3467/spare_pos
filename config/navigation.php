@@ -8,6 +8,6 @@ return [
     'Sales'=>[['New Sale / POS','sale','/pos','pos.access'],['Sales History','receipt','/sales','sales.view'],['Sales Returns','return',null,'sales.create']],
     'Parties'=>[['Customers','users',null,'customers.manage'],['Customer Payments','wallet',null,'customers.manage']],
     'Finance'=>[['Expenses','wallet',null,'expenses.manage'],['Cash Closing','receipt',null,'owner']],
-    'Reports'=>[['Sales & Profit Reports','chart','/sales/report','reports.view'],['Purchase Reports','chart',null,'reports.view'],['Stock Reports','chart',null,'reports.view']],
+    'Reports'=>[['Reports Dashboard','chart','/reports','reports.view'],['Sales Reports','receipt','/reports/sales','reports.view'],['Profit Reports','chart','/reports/profit','reports.view'],['Inventory Reports','stock','/reports/inventory','reports.view']],
     'Settings'=>[['Shop Details','settings',null,'owner'],['Staff & Permissions','users','/staff','owner'],['Tax & Invoice Settings','sliders','/sales/settings','owner']],
 ];

@@ -29,3 +29,7 @@ foreach([['GET','/sales/report','report'],['POST','/sales/labour-expense','expen
  $middleware=[AuthMiddleware::class,App\Middleware\SalesMiddleware::class];if($method==='POST')$middleware[]=CsrfMiddleware::class;
  $router->add($method,$path,[App\Controllers\SalesController::class,$action],$middleware);
 }
+
+foreach(['/reports','/reports/sales','/reports/profit','/reports/inventory','/reports/export'] as $path){
+ $router->add('GET',$path,[App\Controllers\ReportController::class,$path==='/reports/export'?'export':'index'],[AuthMiddleware::class,App\Middleware\ReportMiddleware::class]);
+}

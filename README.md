@@ -120,3 +120,7 @@ Manual Inventory is available at `/inventory`, with Stock In, Stock Out, counted
 POS and Sales: configure the shop's tax and invoice settings before billing. Setup, workflows, database migration, permissions and test commands are documented in [docs/sales.md](docs/sales.md).
 
 POS labour charges are service lines with no inventory effect. Apply `php database/migrations/sales-labour.php` after the sales migration. Configure a separate labour tax classification for regular GST billing. Revenue and profit reporting, actual technician payouts and cancellation reversals are documented in [docs/sales.md](docs/sales.md#labour-services-revenue-and-actual-costs).
+
+### Reports & Analytics
+
+Reports Dashboard, Sales, Profit and Inventory reports are available under **Reports**, using the existing `reports.view` permission. Apply `php database/migrations/reports.php` for the payment-date lookup index. Reports use existing invoice/carrying-cost snapshots, exclude cancelled invoices, separate labour revenue from product COGS, and provide CSV/Excel exports. [Report documentation](docs/reports.md) covers date/payment policies, cost-quality flags, permissions and test commands.

@@ -61,10 +61,10 @@ final class DashboardService {
             $data['activity']=$this->query($sql.' ORDER BY last_login_at DESC,id DESC LIMIT 5',$args)->fetchAll();
         } catch (Throwable $e) { error_log($e->getMessage());$data['errors']['activity']='Recent activity could not be loaded.'; }
         try {
-            if ($access['finance'] && $this->hasTable('sales') && $this->hasTable('sale_items') && $this->hasTable('sale_services') && $this->hasTable('service_expenses') && $this->hasTable('sale_cancellations')) {
-                $revenue=new RevenueReportService((int)$shop);
-                $data['sales_today']=$revenue->summary(['from'=>$today->format('Y-m-d'),'to'=>$today->format('Y-m-d')]);
-                $data['revenue']=$revenue->summary(['from'=>substr($from,0,10),'to'=>$today->format('Y-m-d')]);
+            if ($access['finance'] && $this->hasTable('sales') && $this->hasTable('sale_items') && $this->hasTable('sale_services') && $this->hasTable('sale_cancellations')) {
+                $revenue=new ReportService((int)$shop);
+                $data['sales_today']=$revenue->consistent(fn()=>$revenue->summary(ReportService::filters(['period'=>'today'])));
+                $data['revenue']=$revenue->consistent(fn()=>$revenue->summary(ReportService::filters(['period'=>'custom','from'=>substr($from,0,10),'to'=>$today->format('Y-m-d')])));
                 if (can($user,'sales.view')) $data['recent_sales']=array_slice((new SaleService((int)$shop))->history([])['rows'],0,5);
             }
         } catch (Throwable $e) { error_log($e->getMessage());$data['sales_today']=null;$data['revenue']=null;$data['errors']['sales']='Sales totals are temporarily unavailable.'; }
