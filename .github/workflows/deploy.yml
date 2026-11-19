@@ -1,0 +1,32 @@
+
+name: Spare POS CI/CD
+
+'on':
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Hostinger VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy Spare POS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+            cd /var/www/spare
+            git fetch origin main
+            git reset --hard origin/main
+            composer dump-autoload --no-dev --optimize
+            chown -R www-data:www-data storage
+            find storage -type d -exec chmod 775 {} \;
+            find storage -type f -exec chmod 664 {} \;
+            echo "Spare POS deployment completed!"
