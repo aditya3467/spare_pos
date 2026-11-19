@@ -1,0 +1,18 @@
+{
+  "id": "./",
+  "name": "Spare — Shop Management",
+  "short_name": "Spare",
+  "description": "Your spare-parts shop workspace. A connection is required for shop operations.",
+  "lang": "en-IN",
+  "start_url": "./index.php?route=%2Fdashboard",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#335b45",
+  "background_color": "#f5f6f3",
+  "icons": [
+    {"src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "assets/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+    {"src": "assets/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

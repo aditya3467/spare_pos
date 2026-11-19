@@ -10,7 +10,7 @@ Run commands from the project root:
 2. Create an empty `spare_pos` database in phpMyAdmin using utf8mb4.
 3. Copy `.env.example` to `.env` and set your MySQL credentials.
 4. Run `/Applications/XAMPP/xamppfiles/bin/php database/migrations/setup.php`.
-5. Run `/Applications/XAMPP/xamppfiles/bin/php database/seeders/create-user.php` in an interactive terminal for each account. Create an owner first to obtain a shop ID for staff. Password entry is hidden. There are no default accounts.
+5. Run `/Applications/XAMPP/xamppfiles/bin/php database/seeders/create-user.php` in an interactive terminal to provision the initial owner/superadmin. Owners can then create staff through **Settings → Staff & Permissions**. Password entry in the CLI is hidden. There are no default accounts.
 6. Run `/Applications/XAMPP/xamppfiles/bin/php database/migrations/inventory.php` to install inventory tables, ledger guards and the catalogue for existing shops. The migration account needs `TRIGGER` in addition to its schema privileges.
 7. Open `http://localhost/spare_pos/`; the root index redirects to `public/`.
 
@@ -46,7 +46,7 @@ Folders for future modules follow the supplied tree. Product CRUD, stock operati
 
 Roles are `superadmin`, `shop_owner` and `staff`. Owners manage permissions only for staff in their own shop. Staff begin without permissions; updates take effect on the next request. Superadmin has configured platform privileges. Future modules must enforce `can()` server-side and scope shop data in their queries.
 
-Includes password hashing, prepared SQL, session rotation, CSRF protection, POST-only logout, active-account checks, 30-minute idle expiry and database-backed throttling (five attempts per email/IP or IP per rolling 15 minutes). Owners' permission updates lock the target staff row and run in a transaction. No public registration or password reset is exposed.
+Includes password hashing, prepared SQL, session rotation, CSRF protection, POST-only logout, active-account checks, 30-minute idle expiry and database-backed throttling (five attempts per email/IP or IP per rolling 15 minutes). Owners' permission updates lock the target staff row and run in a transaction. No public registration or self-service password reset is exposed; shop owners can reset passwords for their own staff.
 
 Use HTTPS and a restricted MySQL user in production. Ensure Apache permits the supplied `.htaccess` restrictions. Private directories and dotfiles must not be served; use `public/` as the production document root. Authenticated responses use `no-store`; offline authentication and transaction syncing remain future work.
 
@@ -124,3 +124,12 @@ POS labour charges are service lines with no inventory effect. Apply `php databa
 ### Reports & Analytics
 
 Reports Dashboard, Sales, Profit and Inventory reports are available under **Reports**, using the existing `reports.view` permission. Apply `php database/migrations/reports.php` for the payment-date lookup index. Reports use existing invoice/carrying-cost snapshots, exclude cancelled invoices, separate labour revenue from product COGS, and provide CSV/Excel exports. [Report documentation](docs/reports.md) covers date/payment policies, cost-quality flags, permissions and test commands.
+
+
+### Staff account management
+
+Owners can add staff, edit details, reset passwords, activate/deactivate accounts and manage permissions through **Settings → Staff & Permissions**. Apply `php database/migrations/staff-management.php` for session-version invalidation. Password resets, email changes and deactivation revoke existing staff sessions while preserving account history and permissions. [Staff documentation](docs/staff.md) covers the workflow, security boundaries and tests.
+
+### PWA foundation
+
+The app now has a web manifest, branded normal/maskable icons, browser installation controls, an online/offline indicator and a generic offline fallback. Only explicit public static files are cached; PHP pages, API responses and shop data remain network-only. No offline transactions or sync are implemented. Serve `public/` over HTTPS (localhost works for development) and bump `VERSION` in `public/service-worker.js` whenever shell assets change. [PWA deployment and test guide](docs/pwa.md) lists files, headers, scope/cache rules, browser results and manual native-device checks.

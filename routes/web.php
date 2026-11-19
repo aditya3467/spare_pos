@@ -33,3 +33,6 @@ foreach([['GET','/sales/report','report'],['POST','/sales/labour-expense','expen
 foreach(['/reports','/reports/sales','/reports/profit','/reports/inventory','/reports/export'] as $path){
  $router->add('GET',$path,[App\Controllers\ReportController::class,$path==='/reports/export'?'export':'index'],[AuthMiddleware::class,App\Middleware\ReportMiddleware::class]);
 }
+
+$router->add('GET','/staff/form',[App\Controllers\StaffController::class,'form'],[AuthMiddleware::class,RoleMiddleware::class]);
+$router->add('POST','/staff/save',[App\Controllers\StaffController::class,'save'],[AuthMiddleware::class,RoleMiddleware::class,CsrfMiddleware::class]);

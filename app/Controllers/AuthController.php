@@ -27,7 +27,7 @@ final class AuthController extends Controller {
                         if (password_needs_rehash($user['password_hash'], PASSWORD_DEFAULT)) {
                             db()->prepare('UPDATE users SET password_hash = ? WHERE id = ?')->execute([password_hash($password, PASSWORD_DEFAULT), $user['id']]);
                         }
-                        session_regenerate_id(true); $_SESSION = ['user_id' => $user['id'], 'last_activity' => time()];
+                        session_regenerate_id(true); $_SESSION = ['user_id' => $user['id'], 'auth_version'=>(int)$user['session_version'], 'last_activity' => time()];
                         db()->prepare('UPDATE users SET last_login_at = NOW() WHERE id = ?')->execute([$user['id']]);
                         db()->prepare('DELETE FROM login_attempts WHERE identity_hash = ? OR attempted_at < DATE_SUB(NOW(), INTERVAL 1 DAY)')->execute([$identity]);
                         redirect('/dashboard');

@@ -9,9 +9,9 @@ function expect(bool $condition, string $message): void {
     if (!$condition) throw new RuntimeException($message);
 }
 $pdo = db();
-$pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, shop_id INTEGER, name TEXT, email TEXT, role TEXT, active INTEGER)');
+$pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, shop_id INTEGER, name TEXT, email TEXT, role TEXT, active INTEGER, session_version INTEGER NOT NULL DEFAULT 1)');
 $pdo->exec('CREATE TABLE staff_permissions (user_id INTEGER, permission TEXT)');
-$pdo->exec("INSERT INTO users VALUES (1, NULL, 'Admin', 'admin@example.com', 'superadmin', 1), (2, 1, 'Owner', 'owner@example.com', 'shop_owner', 1), (3, 1, 'Staff', 'staff@example.com', 'staff', 1), (4, 2, 'Other staff', 'other@example.com', 'staff', 1)");
+$pdo->exec("INSERT INTO users (id,shop_id,name,email,role,active) VALUES (1, NULL, 'Admin', 'admin@example.com', 'superadmin', 1), (2, 1, 'Owner', 'owner@example.com', 'shop_owner', 1), (3, 1, 'Staff', 'staff@example.com', 'staff', 1), (4, 2, 'Other staff', 'other@example.com', 'staff', 1)");
 expect(current_user() === null, 'Guests must not authenticate.');
 $_SESSION['user_id'] = 3;
 $staff = current_user();

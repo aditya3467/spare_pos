@@ -43,11 +43,11 @@ try:
     admin, admin_dashboard = login('superadmin')
     check('app-sidebar' in dashboard and 'app-topbar' in dashboard, 'Dashboard must use shared application shell')
     check(dashboard.count('class="metric-card') == 7, 'Dashboard must display seven summary metrics')
-    for label in ['Sales not set up','Payments not set up','Purchases not set up']:
+    for label in ['Payments not set up','Purchases not set up']:
         check(label in dashboard, 'Unavailable modules must be identified honestly')
     check('Permission required' in staff_dashboard and '₹0.00' not in staff_dashboard, 'Unprivileged staff must not see stock valuation')
     check('No shop selected' in admin_dashboard, 'Unscoped superadmin must not see global shop totals')
-    check('href="index.php?route=%2Fproducts"' in dashboard and 'href="index.php?route=%2Fpos"' not in dashboard, 'Products route must work while future POS remains disabled')
+    check('href="index.php?route=%2Fproducts"' in dashboard and 'href="index.php?route=%2Fpos"' in dashboard and 'Today’s revenue' in dashboard, 'Implemented products, POS and sales totals must remain accessible')
     _, staff_page, _ = request(owner, '/staff')
     check('Staff &amp; Permissions' in staff_page and 'data-staff-permissions' in staff_page, 'Staff management must have its own functional settings page')
     check(request(staff, '/staff')[0] == 403 and request(admin, '/staff')[0] == 403, 'Staff management must be owner-only')

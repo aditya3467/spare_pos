@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
  password_hash VARCHAR(255) NOT NULL,
  role ENUM('superadmin','shop_owner','staff') NOT NULL,
  active BOOLEAN NOT NULL DEFAULT TRUE,
+ session_version BIGINT UNSIGNED NOT NULL DEFAULT 1,
  last_login_at DATETIME NULL,
  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
  FOREIGN KEY (shop_id) REFERENCES shops(id),

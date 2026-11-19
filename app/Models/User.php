@@ -3,7 +3,7 @@ namespace App\Models;
 use App\Core\Model;
 final class User extends Model {
     public static function staff(int $shopId): array {
-        $stmt = self::db()->prepare("SELECT id, name, email FROM users WHERE shop_id = ? AND role = 'staff' ORDER BY name");
+        $stmt = self::db()->prepare("SELECT id, name, email, active, last_login_at FROM users WHERE shop_id = ? AND role = 'staff' ORDER BY name");
         $stmt->execute([$shopId]);
         $staff = $stmt->fetchAll();
         $permissions = self::db()->prepare('SELECT permission FROM staff_permissions WHERE user_id = ?');
