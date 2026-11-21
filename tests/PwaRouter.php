@@ -8,5 +8,6 @@ if(str_ends_with($file,'.php')){http_response_code(403);exit;}
 $types=['js'=>'application/javascript','css'=>'text/css','html'=>'text/html','webmanifest'=>'application/manifest+json','svg'=>'image/svg+xml','png'=>'image/png'];$extension=pathinfo($file,PATHINFO_EXTENSION);header('Content-Type: '.($types[$extension]??'application/octet-stream'));header('X-Content-Type-Options: nosniff');header('Cache-Control: public, max-age=3600');
 $state=json_decode(@file_get_contents(getenv('PWA_TEST_STATE')),true)?:['version'=>'test-v1'];
 if($relative==='service-worker.js'){header('Cache-Control: no-cache, max-age=0, must-revalidate');$source=file_get_contents($file);echo preg_replace("/const VERSION = '[^']+';/","const VERSION = '".$state['version']."';",$source);return;}
+if($relative==='assets/css/app.css' && isset($_GET['asset_probe'])){header('Content-Type: text/css');echo '/* asset-probe-'.preg_replace('/[^a-zA-Z0-9_-]/','',(string)($state['asset_revision']??'unset')).' */';return;}
 if(($state['fail']??false) && $relative==='assets/css/app.css'){header('Content-Type: text/html');header('Cache-Control: no-store');echo '<html>Unsafe test asset; must never enter the static cache.</html>';return;}
 if($relative==='manifest.webmanifest')header('Cache-Control: no-cache, max-age=0, must-revalidate');readfile($file);

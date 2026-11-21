@@ -50,6 +50,17 @@
   sync();
 
   document.addEventListener('submit', async event => {
+    const logout = event.target.closest('[data-auth-logout]');
+    if (logout) {
+      // POS drafts can include customer details and must not follow a user into
+      // another authenticated session in the same browser tab.
+      try {
+        for (const key of Object.keys(sessionStorage)) {
+          if (key.startsWith('spare-pos-')) sessionStorage.removeItem(key);
+        }
+      } catch (_) {}
+      return;
+    }
     const form = event.target.closest('[data-staff-permissions]');
     if (!form || !window.fetch) return;
     event.preventDefault();
@@ -65,5 +76,13 @@
       status.textContent = result.message;
     } catch (error) { status.textContent = error.message || 'Connection interrupted. Please try again.'; }
     finally { button.disabled = false; form.removeAttribute('aria-busy'); }
+  });
+
+  // Browsers may restore a page from the back-forward cache without making a
+  // request. Force a server authorization check when a private page is restored.
+  window.addEventListener('pageshow', event => {
+    if (event.persisted && document.body.hasAttribute('data-authenticated')) {
+      window.location.reload();
+    }
   });
 })();

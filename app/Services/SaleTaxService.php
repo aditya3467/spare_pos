@@ -4,6 +4,12 @@ use DomainException;
 final class SaleTaxService {
  public static function round(string $n):string {return bcadd($n,bccomp($n,'0',8)<0?'-0.005':'0.005',2);}
  public static function amount(mixed $n,string $label):string {return ProductService::decimal($n,2,false,$label);}
+ public static function discountForPayable(array $lines,string $target,array $settings,string $place):string {
+  $maximum='0.00';foreach($lines as $line){$gross=self::round(bcmul($line['price'],$line['quantity'],8));$net=bcsub($gross,$line['discount']??'0.00',2);$maximum=bcadd($maximum,$net,2);}
+  $low=0;$high=(int)bcmul($maximum,'100',0);$targetCents=(int)bcmul($target,'100',0);$best=0;$bestDifference=PHP_INT_MAX;
+  while($low<=$high){$middle=intdiv($low+$high,2);$discount=bcdiv((string)$middle,'100',2);$payable=self::calculate($lines,$discount,$settings,$place)['total'];$payableCents=(int)bcmul($payable,'100',0);$difference=abs($payableCents-$targetCents);if($difference<$bestDifference){$best=$middle;$bestDifference=$difference;}if($difference===0)return $discount;if($payableCents>$targetCents)$low=$middle+1;else $high=$middle-1;}
+  return bcdiv((string)$best,'100',2);
+ }
  // Discounts are fixed currency amounts in the configured price basis, allocated before GST.
  public static function calculate(array $lines,string $billDiscount,array $settings,string $place):array {
   $subtotal='0.00';$lineDiscount='0.00';$net='0.00';

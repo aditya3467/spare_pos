@@ -1,6 +1,6 @@
 /* Bump VERSION whenever any file in STATIC_ASSETS changes. Never add PHP or API URLs. */
 'use strict';
-const VERSION = '2026.11.19.2';
+const VERSION = '2026.11.21.1';
 const BASE = new URL('./', self.location.href);
 const CACHE_PREFIX = `spare-shell:${encodeURIComponent(BASE.pathname)}:`;
 const CACHE_NAME = CACHE_PREFIX + VERSION;
@@ -18,8 +18,17 @@ const STATIC_ASSETS = [
 ];
 const ALLOWED = new Set(STATIC_ASSETS.map(path => new URL(path, BASE).href));
 const OFFLINE_URL = new URL('offline.html', BASE).href;
+function allowedStatic(url) {
+ const canonical = new URL(url.href);
+ canonical.search = '';
+ canonical.hash = '';
+ return ALLOWED.has(canonical.href) ? canonical.href : null;
+}
 function validStatic(url, response) {
- if (!response.ok || response.redirected || response.type === 'opaque' || response.url !== url) return false;
+ const finalUrl = new URL(response.url);
+ finalUrl.search = '';
+ finalUrl.hash = '';
+ if (!response.ok || response.redirected || response.type === 'opaque' || finalUrl.href !== url) return false;
  if (/\b(private|no-store)\b/i.test(response.headers.get('Cache-Control') || '')) return false;
  const mime = (response.headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase();
  const path = new URL(url).pathname;
@@ -69,10 +78,24 @@ self.addEventListener('fetch', event => {
  const url = new URL(request.url);
  // No POST interception, retries, background sync, transaction queue or cross-origin cache.
  if (request.method !== 'GET' || url.origin !== BASE.origin || !url.pathname.startsWith(BASE.pathname)) return;
- if (ALLOWED.has(url.href)) {
+ const staticUrl = allowedStatic(url);
+ if (staticUrl) {
   event.respondWith((async () => {
    const cache = await caches.open(CACHE_NAME);
-   return (await cache.match(url.href)) || fetch(request, {cache:'no-store'});
+   try {
+    // Revalidate allowlisted public assets online. PHP adds content hashes to
+    // view URLs; canonical cache keys preserve the last good copy for offline use.
+    const response = await fetch(request, {cache:'no-store'});
+    if (validStatic(staticUrl, response)) {
+     await cache.put(staticUrl, response.clone());
+     return response;
+    }
+    return (await cache.match(staticUrl)) || response;
+   } catch (error) {
+    const cached = await cache.match(staticUrl);
+    if (cached) return cached;
+    throw error;
+   }
   })());
   return;
  }

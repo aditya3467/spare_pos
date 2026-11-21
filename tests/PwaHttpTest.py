@@ -22,7 +22,8 @@ for asset in assets:
  status,b,h=request(asset);check(status==200 and (root/'public'/asset).is_file(),'Precache asset exists '+asset)
 expected={str(p.relative_to(root/'public')) for p in (root/'public/assets').rglob('*') if p.suffix in ['.css','.js','.png','.svg','.woff','.woff2','.ttf']};check(expected.issubset(set(assets)),'All current static CSS/JS/icons/fonts covered')
 for route in ['/login','/dashboard']:
- status,b,h=request('index.php?route='+urllib.parse.quote(route,safe=''));check(status==200 and 'no-store' in h.get('Cache-Control','') and b'manifest.webmanifest' in b,'Login/redirect retains no-store and manifest '+route)
+ status,b,h=request('index.php?route='+urllib.parse.quote(route,safe=''));cache=h.get('Cache-Control','').lower();check(status==200 and all(token in cache for token in ['no-store','no-cache','must-revalidate']) and h.get('Pragma','').lower()=='no-cache' and h.get('Expires')=='0' and b'manifest.webmanifest' in b,'Dynamic route has explicit private cache headers and manifest '+route)
+ if route=='/login':check(re.search(rb'assets/css/app\.css\?v=[a-f0-9]{16}',b) and re.search(rb'assets/js/app\.js\?v=[a-f0-9]{16}',b),'Login view uses content-versioned CSS/JS')
 status,b,h=request('offline.html');check(status==200 and b'No shop data is available offline' in b and b'PRIVATE' not in b,'Offline page is public generic shell')
 # The same URL shapes are also served by the existing local Apache installation.
 try:

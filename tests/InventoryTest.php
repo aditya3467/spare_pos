@@ -8,7 +8,7 @@ function invreject(callable $f,string $message):void{try{$f();}catch(DomainExcep
 function child(array $command):void{global $root;$p=proc_open($command,[1=>['pipe','w'],2=>['pipe','w']],$pipes,$root);$out=stream_get_contents($pipes[1]);$err=stream_get_contents($pipes[2]);fclose($pipes[1]);fclose($pipes[2]);if(proc_close($p)!==0)throw new RuntimeException($out.$err);echo $out;}
 try{
  putenv('DB_DSN=mysql:host=127.0.0.1;dbname='.$database.';charset=utf8mb4');putenv('DB_USERNAME='.$adminUser);putenv('DB_PASSWORD='.$adminPass);require $root.'/app/bootstrap.php';db()->exec(file_get_contents($root.'/database/schema.sql'));
- foreach(['inventory.php','products.php','inventory-management.php','inventory-management.php','inventory-search.php','inventory-search.php'] as $script)child([PHP_BINARY,$root.'/database/migrations/'.$script]);
+ foreach(['inventory.php','products.php','product-pricing-modes.php','inventory-management.php','inventory-management.php','inventory-search.php','inventory-search.php'] as $script)child([PHP_BINARY,$root.'/database/migrations/'.$script]);
  db()->exec("INSERT INTO shops(name) VALUES('Inventory Test'),('Other shop')");$password='Inventory-Test-'.bin2hex(random_bytes(10));
  foreach(['shop_owner','staff'] as $role)db()->prepare('INSERT INTO users(shop_id,name,email,password_hash,role) VALUES(1,?,?,?,?)')->execute([$role,$role.'@inventory.test',password_hash($password,PASSWORD_DEFAULT),$role]);
  $owner=['id'=>1,'shop_id'=>1,'role'=>'shop_owner'];$staff=['id'=>2,'shop_id'=>1,'role'=>'staff'];(new App\Services\CategoryService(1))->seed();

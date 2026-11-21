@@ -7,11 +7,16 @@ final class Auth {
         header('X-Frame-Options: DENY');
         header('Referrer-Policy: same-origin');
         header("Content-Security-Policy: default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
-        header('Cache-Control: no-store');
         ini_set('session.use_strict_mode', '1');
         session_name('spare_session');
         session_set_cookie_params(['httponly' => true, 'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off', 'samesite' => 'Lax', 'path' => '/']);
         session_start();
+        // session_start() may apply PHP's session cache limiter. Set the final
+        // policy afterward so every dynamic response stays explicitly private.
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+        header('Surrogate-Control: no-store');
         if (isset($_SESSION['last_activity']) && time() - $_SESSION['last_activity'] > $config['session_idle_timeout']) {
             $_SESSION = [];
             session_regenerate_id(true);
