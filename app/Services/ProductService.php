@@ -43,7 +43,9 @@ final class ProductService {
    if($field==='subcategory_id' && $row && (int)$row['category_id']!==$d['category_id'])throw new DomainException('Subcategory does not belong to the selected category.');
   }
   foreach(['purchase_price','selling_price'] as $field)$d[$field]=self::decimal($input[$field]??'',2,false,ucfirst(str_replace('_',' ',$field)));
-  $d['mrp']=self::decimal($input['mrp']??'',2,true,'MRP');$d['reorder_level']=self::decimal($input['reorder_level']??'0',6,false,'Minimum stock level');
+  $d['mrp']=self::decimal($input['mrp']??'',2,true,'MRP');if($d['mrp']!==null&&bccomp($d['mrp'],'0',2)<0)throw new DomainException('MRP cannot be negative.');
+  foreach(['purchase_discount'=>'purchase_price','selling_discount'=>'selling_price'] as $discountField=>$priceField){$raw=$input[$discountField]??'';if($raw===''||$raw===null)$d[$discountField]=null;else{$d[$discountField]=self::decimal($raw,2,false,ucfirst(str_replace('_',' ',$discountField)));if(bccomp($d[$discountField],'100',2)>0)throw new DomainException('Discount percentages must be between 0 and 100.');if($d['mrp']===null)throw new DomainException('Enter MRP when a '.str_replace('_',' ',$discountField).' is provided.');$d[$priceField]=number_format((float)$d['mrp']*(1-(float)$d[$discountField]/100),2,'.','');}}
+  $d['reorder_level']=self::decimal($input['reorder_level']??'0',6,false,'Minimum stock level');
   $d['status']=$input['status']??'active';if(!in_array($d['status'],['active','inactive'],true))throw new DomainException('Invalid product status.');
   $aliases=$this->text($input,'aliases',3000);$d['aliases']=[];$seenAliases=[];foreach(array_filter(array_map('trim',explode(',',$aliases))) as $alias){$fold=mb_strtolower($alias);if(!isset($seenAliases[$fold]))$d['aliases'][]=$alias;$seenAliases[$fold]=true;}
   if(count($d['aliases'])>30)throw new DomainException('Use at most 30 aliases.');foreach($d['aliases'] as $alias)if(mb_strlen($alias)>190)throw new DomainException('Each alias must be under 190 characters.');
@@ -82,7 +84,7 @@ final class ProductService {
    $existing=$id?$this->get($id):null;if($existing && $existing['archived_at'])throw new DomainException('Archived products cannot be edited.');
    if($existing && (string)($input['lock_version']??'')!==(string)$existing['lock_version'])throw new DomainException('This product changed since you opened it. Reload before editing.');
    $d=$this->validate($input,$actor,$existing,$import);
-   $fields=array_intersect_key($d,array_flip(['name','description','part_number','rack_location','hsn_code','category_id','subcategory_id','brand_id','tax_rate_id','purchase_price','selling_price','mrp','reorder_level','status']));
+   $fields=array_intersect_key($d,array_flip(['name','description','part_number','rack_location','hsn_code','category_id','subcategory_id','brand_id','tax_rate_id','purchase_price','selling_price','mrp','purchase_discount','selling_discount','reorder_level','status']));
    if($id){$q=$pdo->prepare('UPDATE products SET '.implode(',',array_map(fn($k)=>"$k=?",array_keys($fields))).',lock_version=lock_version+1 WHERE shop_id=? AND id=?');$q->execute([...array_values($fields),$this->shop,$id]);}
    else {
     $q=$pdo->prepare("SELECT id FROM units WHERE shop_id=? AND code='ITEM'");$q->execute([$this->shop]);$internal=$q->fetchColumn();if(!$internal){$pdo->prepare("INSERT INTO units (shop_id,name,code) VALUES (?,'Item','ITEM')")->execute([$this->shop]);$internal=$pdo->lastInsertId();}
