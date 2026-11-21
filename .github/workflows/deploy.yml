@@ -26,6 +26,7 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             composer dump-autoload --no-dev --optimize
+            php database/migrations/add-sale-bike-snapshot.php
             chown -R www-data:www-data storage
             find storage -type d -exec chmod 775 {} \;
             find storage -type f -exec chmod 664 {} \;

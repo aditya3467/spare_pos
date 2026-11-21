@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS sales (
  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, shop_id BIGINT UNSIGNED NOT NULL,
  invoice_number VARCHAR(16) NOT NULL, request_key CHAR(40) NOT NULL, payload_hash CHAR(64) NOT NULL,
  customer_id BIGINT UNSIGNED NULL, customer_snapshot TEXT NOT NULL, shop_snapshot TEXT NOT NULL,
+ vehicle_model_snapshot VARCHAR(400) NULL,
  place_of_supply CHAR(2) NOT NULL, document_type VARCHAR(40) NOT NULL,
  subtotal DECIMAL(15,2) NOT NULL, discount DECIMAL(15,2) NOT NULL, taxable DECIMAL(15,2) NOT NULL,
  cgst DECIMAL(15,2) NOT NULL, sgst DECIMAL(15,2) NOT NULL, igst DECIMAL(15,2) NOT NULL, total DECIMAL(15,2) NOT NULL,
