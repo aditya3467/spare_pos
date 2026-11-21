@@ -14,7 +14,7 @@ Run commands from the project root:
 6. Run `/Applications/XAMPP/xamppfiles/bin/php database/migrations/inventory.php` to install inventory tables, ledger guards and the catalogue for existing shops. The migration account needs `TRIGGER` in addition to its schema privileges.
 7. Open `http://localhost/spare_pos/`; the root index redirects to `public/`.
 
-For production, configure the web server document root to this project's `public/` directory. The application also works in a subdirectory. Routes currently use `index.php?route=/login`, so URL rewriting is not required.
+For production, configure the web server document root to this project's `public/` directory. The application also works in a subdirectory. Routes currently use `index.php?route=/login`, so URL rewriting is not required. The GitHub Actions deploy workflow runs only the additive `add-sale-bike-snapshot.php` migration required by POS bike selection; it does not seed or import local data.
 
 ## Structure
 

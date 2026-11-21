@@ -1,13 +1,13 @@
 <?php
 namespace App\Controllers;
 use App\Core\Controller;
-use App\Services\{SaleService,SalesSettingsService,ProductService};
+use App\Services\{SaleService,SalesSettingsService,ProductService,ProductMasterService};
 use DomainException;
 final class SalesController extends Controller {
  private function service():SaleService{return new SaleService((int)current_user()['shop_id']);}
  private function input():array {$raw=$_POST['payload']??'';if(!is_string($raw))throw new DomainException('Invalid request.');$d=json_decode($raw,true);if(!is_array($d))throw new DomainException('Invalid request.');return $d;}
  private function json(callable $fn):void {header('Content-Type: application/json');try{echo json_encode($fn(),JSON_THROW_ON_ERROR);}catch(DomainException $e){http_response_code(422);echo json_encode(['error'=>$e->getMessage()]);}catch(\Throwable $e){error_log((string)$e);http_response_code(500);echo json_encode(['error'=>'The operation could not be completed. Nothing was partially posted. Retry with the same checkout.']);}}
- public function pos():void {$shop=(int)current_user()['shop_id'];$settings=(new SalesSettingsService($shop))->get(false);$states=SalesSettingsService::states();$bikeMasters=(new ProductMasterService($shop))->all();$key=bin2hex(random_bytes(20));$this->page('sales/pos',compact('settings','states','bikeMasters','key'),'New Sale / POS','Sales');}
+ public function pos():void {$shop=(int)current_user()['shop_id'];$settings=(new SalesSettingsService($shop))->get(false);$states=SalesSettingsService::states();$bikeMasters=['vehicle_manufacturers'=>[],'vehicle_models'=>[],'vehicle_variants'=>[]];if($settings){$masters=(new ProductMasterService($shop))->all();foreach($bikeMasters as $table=>$_)$bikeMasters[$table]=$masters[$table]??[];}$key=bin2hex(random_bytes(20));$this->page('sales/pos',compact('settings','states','bikeMasters','key'),'New Sale / POS','Sales');}
  public function search():void {$this->json(fn()=>['products'=>$this->service()->search(is_string($_GET['q']??null)?$_GET['q']:'')]);}
  public function customers():void {$this->json(fn()=>['customers'=>$this->service()->customers(is_string($_GET['q']??null)?$_GET['q']:'')]);}
  public function customer():void {$this->json(function(){$d=$this->input();$id=$this->service()->addCustomer($d,current_user());return ['customer'=>['id'=>$id]+$d];});}
