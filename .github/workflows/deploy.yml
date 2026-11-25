@@ -28,6 +28,7 @@ jobs:
             composer dump-autoload --no-dev --optimize
             php database/migrations/add-sale-bike-snapshot.php
             php database/migrations/product-pricing-modes.php
+            php database/migrations/sales-custom-items.php
             chown -R www-data:www-data storage
             find storage -type d -exec chmod 775 {} \;
             find storage -type f -exec chmod 664 {} \;
