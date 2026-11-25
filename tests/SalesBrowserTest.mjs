@@ -89,5 +89,14 @@ try{
  await evaluate(`const f=document.querySelector('form[action*="labour-expense"]');f.elements.description.value='Browser technician payout';f.elements.payee.value='Browser technician';f.elements.amount.value='12.34';f.requestSubmit()`);await until(`document.querySelector('.notice')?.textContent.includes('Labour expense recorded.')`);const netAfter=await evaluate(`Number(document.querySelectorAll('.metric-value')[3].textContent.replace(/[₹,]/g,''))`);check(Math.abs(netBefore-netAfter-12.34)<0.001,'Actual payout reduces displayed net profit');
  await evaluate(`document.querySelector('[data-reverse-expense]').click()`);check(await evaluate(`document.getElementById('labour-expense-reversal').open`),'Expense correction uses confirmation popup');await evaluate(`const f=document.querySelector('#labour-expense-reversal form');f.elements.description.value='Browser payout recovered';f.requestSubmit()`);await until(`document.body.textContent.includes('Browser payout recovered')`);const netRecovered=await evaluate(`Number(document.querySelectorAll('.metric-value')[3].textContent.replace(/[₹,]/g,''))`);check(Math.abs(netBefore-netRecovered)<0.001,'Expense recovery restores net and preserves audit history');
  await go('/dashboard');check(await evaluate(`document.body.textContent.includes('Today’s revenue') && document.body.textContent.includes('Labour / Service')`),'Dashboard shows labour revenue and separate profit');
+ await go('/pos');
+ await evaluate(`document.getElementById('pos-add-custom').click();const f=document.getElementById('pos-custom-form');f.elements.namedItem('name').value='Special part';f.elements.quantity.value='2';f.elements.price.value='30';f.elements.unit_cost.value='10';f.dispatchEvent(new Event('input'))`);
+ check(await evaluate(`document.getElementById('pos-custom-preview').textContent.includes('Gross profit ₹40.00')`),'Custom item live profit');
+ await evaluate(`document.getElementById('pos-custom-form').requestSubmit()`);
+ await until(`document.querySelector('[data-edit-custom]') && !document.getElementById('pos-checkout').disabled`);
+ await evaluate(`document.querySelector('[data-edit-custom]').click();const f=document.getElementById('pos-custom-form');f.elements.price.value='40';f.requestSubmit()`);
+ check(await evaluate(`document.getElementById('pos-custom-items').textContent.includes('₹40.00')`),'Edit custom item price');
+ await evaluate(`document.querySelector('#pos-custom-items button:last-child').click()`);
+ check(await evaluate(`document.getElementById('pos-custom-items').children.length===0`),'Remove custom item');
  check(errors.length===0,'No browser exceptions');console.log(`PASS: ${checks} sales browser checks.`);
 }finally{if(socket?.readyState===1){try{await send('Browser.close');}catch{}socket.close();}chrome.kill();}

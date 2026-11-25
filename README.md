@@ -133,3 +133,5 @@ Owners can add staff, edit details, reset passwords, activate/deactivate account
 ### PWA foundation
 
 The app now has a web manifest, branded normal/maskable icons, browser installation controls, an online/offline indicator and a generic offline fallback. Only explicit public static files are cached; PHP pages, API responses and shop data remain network-only. No offline transactions or sync are implemented. Serve `public/` over HTTPS (localhost works for development) and bump `VERSION` in `public/service-worker.js` whenever shell assets change. [PWA deployment and test guide](docs/pwa.md) lists files, headers, scope/cache rules, browser results and manual native-device checks.
+
+For one-time goods in POS 2.0, run `php database/migrations/sales-custom-items.php` after the sales migration and before serving the updated application. The migration creates an empty invoice-line table and its immutability triggers. Custom goods use entered cost and the existing invoice tax, discount and customer credit rules.

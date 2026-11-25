@@ -6,6 +6,20 @@
 <div id="pos-error" class="alert" role="alert" hidden></div>
 <div class="pos-layout"><section class="surface product-section pos-catalogue"><h2>Find products</h2><label class="pos-search-label">Product search<input id="pos-search" type="search" autofocus autocomplete="off" placeholder="Name, SKU, OEM, brand or bike…" aria-controls="pos-results"></label><p id="pos-search-status" class="subtle-text" role="status">Type to find products.</p><div id="pos-results" class="pos-results"></div></section>
 <section class="surface product-section pos-cart"><div class="pos-section-heading"><h2>Current bill <span id="pos-item-count" class="subtle-text">0 items</span></h2><button type="button" class="button button-small" id="pos-clear">Clear cart</button></div><div id="pos-cart-items"><p class="empty-state">Add a product to start this bill.</p></div>
+<div id="pos-custom-items"></div>
+<button type="button" class="button button-small" id="pos-add-custom">+ Add Custom Item</button>
+<dialog class="sales-dialog" id="pos-custom-dialog"><form id="pos-custom-form">
+<h2>Custom item</h2><div class="product-fields">
+<label>Description<input name="name" maxlength="190" required></label>
+<label>Quantity<input name="quantity" type="number" value="1" min="0.000001" step="0.000001" required></label>
+<label>Cost price / unit (₹)<input name="unit_cost" type="number" min="0" step="0.01" required></label>
+<label>Selling price / unit (₹)<input name="price" type="number" min="0" step="0.01" required></label>
+<label>Unit (optional)<input name="unit" maxlength="30"></label>
+<label>HSN<input name="hsn_code" maxlength="20" <?= $settings['registration_type']==='regular' && $settings['require_hsn']?'required':'' ?>></label>
+<?php if($settings['registration_type']==='regular'): ?><label>Tax rate<select name="tax_rate_id"><option value="">Invoice default</option><?php foreach($bikeMasters['tax_rates'] as $rate): if($rate['status']!=='active')continue; ?><option value="<?= (int)$rate['id'] ?>"><?= e($rate['name']) ?> · <?= e($rate['rate']) ?>%</option><?php endforeach; ?></select></label><?php endif; ?>
+</div><p id="pos-custom-preview" aria-live="polite"></p>
+<div class="product-actions"><button type="button" class="button" data-close-dialog>Cancel</button><button class="button button-primary">Save item</button></div>
+</form></dialog>
 <div class="pos-labour-section"><div class="pos-section-heading"><h3>Labour charges</h3><button type="button" class="button button-small" id="pos-add-labour">+ Add Labour Charges</button></div><div id="pos-labour-items"></div></div>
 <div class="pos-checkout-cards">
 <section class="pos-context-card" aria-labelledby="pos-vehicle-heading"><div class="pos-context-heading"><h3 id="pos-vehicle-heading">Vehicle information</h3><span>Optional</span></div><div class="product-fields pos-vehicle-fields"><label>Manufacturer<select id="pos-bike-maker"><option value="">No bike selected</option><?php foreach($bikeMasters['vehicle_manufacturers'] as $bike): ?><option value="<?= (int)$bike['id'] ?>"><?= e($bike['name']) ?></option><?php endforeach; ?></select></label><label>Bike / model<select id="pos-bike-model" disabled><option value="">Select manufacturer first</option></select></label><label>Variant<select id="pos-bike-variant" disabled><option value="">Any variant</option></select></label><?php if($user['role']==='shop_owner'): ?><a class="text-link pos-bike-manage" href="<?= e(url('/product-masters')) ?>&amp;type=vehicle_manufacturers" target="_blank" rel="noopener">Manage bike catalogue ↗</a><?php endif; ?></div></section>
